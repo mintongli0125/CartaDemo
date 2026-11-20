@@ -18,7 +18,7 @@
   --line: #e5d9d6;
   --radius: 10px;
   --bad: #d32f2f;
-  --font: "Source Sans 3", "Source Sans Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font: Literata, Georgia, "Palatino Linotype", serif;
   --font-head: var(--font); /* one family for everything in the cardinal theme */
   --fs: 14px;
   --hour: 22px; /* overwritten from JS (HOUR_PX) */
@@ -34,7 +34,7 @@
   --radius: 18px;
   --wash: var(--bg); --on-bg: var(--ink); --ring: var(--accent);
   --card-edge: var(--accent); --ghost-bg: var(--wash); --ghost-ink: var(--muted); --ghost-line: var(--line); --ghost-chip: var(--line);
-  --font: Literata, Georgia, "Palatino Linotype", serif;
+  --font: "Source Sans 3", "Source Sans Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-head: Literata, Georgia, "Palatino Linotype", serif;
   --fs: 13px;
 }
