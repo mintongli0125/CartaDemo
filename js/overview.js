@@ -81,36 +81,22 @@ function ratingChartHTML(course, { compact = false, color = 'var(--accent)' } = 
 
 /* ---------- Where on campus ---------- */
 
-// Which building a room string belongs to. "460-334" matches by building number, "Hewlett 200" by name.
-const buildingKey = (room) => (room
-  ? Object.keys(BUILDING_GEO).find((k) => (/^\d/.test(k) ? room.split('-')[0] === k : room.includes(k)))
-  : null);
-
-// Buildings used by a course, with the rooms in each and whether they are lectures or discussions.
-function buildingsFor(course) {
-  const groups = new Map();
-  Object.values(course.offerings).forEach((offering) => {
-    const meetings = [
-      ...offering.lectures.map((m) => [m, 'lecture']),
-      ...(offering.discussions || []).map((m) => [m, 'discussion']),
-    ];
-    meetings.forEach(([m, kind]) => {
-      const key = buildingKey(m.room);
-      if (!key) return;
-      const geo = BUILDING_GEO[key];
-      const group = groups.get(geo.name) || { geo, rooms: new Map() };
-      if (!group.rooms.has(m.room) || kind === 'lecture') group.rooms.set(m.room, kind);
-      groups.set(geo.name, group);
-    });
-  });
-  return [...groups.values()];
-}
-
 function mapSectionHTML(course) {
   const buildings = buildingsFor(course);
   if (!buildings.length) {
     return '<h4>Where on campus</h4><div class="detail muted">No room locations on file yet, so no map.</div>';
   }
+
+  // Name tags only while there is room for them; with many buildings the printed map labels and the hover text do the job.
+  const tagged = buildings.length <= 6;
+  const points = buildings.map(({ pin, rooms }) => ({
+    x: pin.x,
+    y: pin.y,
+    label: tagged ? pin.short : '',
+    hollow: ![...rooms.values()].includes('lecture'),
+    title: `${pin.name}\n${[...rooms.keys()].slice(0, 6).join(', ')}${rooms.size > 6 ? ' …' : ''}`,
+  }));
+
   const kinds = new Set(buildings.flatMap((b) => [...b.rooms.values()]));
   const legend = [
     kinds.has('lecture') && '<span class="pin on"></span>lecture',
@@ -119,143 +105,8 @@ function mapSectionHTML(course) {
   const missingRoom = Object.values(course.offerings).some((o) => o.lectures.some((m) => !m.room));
 
   return `<h4>Where on campus</h4>
-    <div id="course-map" class="course-map" role="region" aria-label="Map of this course’s rooms"></div>
-    <div class="map-note">${legend} · click a pin for rooms and walking directions${missingRoom ? ' · some meetings have no room yet' : ''}</div>`;
-}
-
-// ---- Live map: Leaflet + OpenStreetMap data, loaded only when a map is first needed ----
-
-const LEAFLET = {
-  js: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  jsHash: 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=',
-  css: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  cssHash: 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=',
-};
-// Tile style follows the theme. Swap for https://tile.openstreetmap.org/{z}/{x}/{y}.png if you prefer plain OSM.
-const TILE_STYLE = { midnight: 'dark_all', cozy: 'rastertiles/voyager' };
-
-let leafletReady = null;
-let courseMap = null;
-let mapToken = 0;
-
-function loadLeaflet() {
-  leafletReady ||= new Promise((resolve, reject) => {
-    if (window.L) return resolve(window.L);
-    const css = document.createElement('link');
-    Object.assign(css, { rel: 'stylesheet', href: LEAFLET.css, integrity: LEAFLET.cssHash, crossOrigin: 'anonymous' });
-    document.head.append(css);
-    const script = document.createElement('script');
-    Object.assign(script, { src: LEAFLET.js, integrity: LEAFLET.jsHash, crossOrigin: 'anonymous' });
-    script.onload = () => (window.L ? resolve(window.L) : reject(new Error('Leaflet missing')));
-    script.onerror = () => reject(new Error('Leaflet failed to load'));
-    document.head.append(script);
-  }).catch((error) => { leafletReady = null; throw error; });
-  return leafletReady;
-}
-
-const stanfordMapUrl = (query) => `https://campus-map.stanford.edu/?srch=${encodeURIComponent(query)}`;
-const walkingUrl = ({ lat, lng }) => `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
-
-function popupHTML({ geo, rooms }) {
-  const list = [...rooms];
-  const rows = list.slice(0, 8).map(([room, kind]) =>
-    `<a href="${stanfordMapUrl(room)}" target="_blank" rel="noopener">${room}</a> <span class="muted">${kind}</span>`
-  ).join('<br>');
-  const more = list.length > 8 ? `<br><span class="muted">+${list.length - 8} more rooms</span>` : '';
-  return `<b>${geo.name}</b><br>${rows}${more}<br>
-    <a href="${walkingUrl(geo)}" target="_blank" rel="noopener">Walking directions ↗</a>`;
-}
-
-function destroyCourseMap() {
-  mapToken += 1; // anything still loading belongs to a screen that is gone
-  if (courseMap) { courseMap.remove(); courseMap = null; }
-}
-
-async function renderCourseMap(course) {
-  const box = $('#course-map');
-  if (!box) return;
-  const token = ++mapToken;
-  const buildings = buildingsFor(course);
-
-  try {
-    const L = await loadLeaflet();
-    if (token !== mapToken || !box.isConnected) return;
-
-    const styles = getComputedStyle(document.documentElement);
-    const accent = styles.getPropertyValue('--accent').trim() || '#8c1515';
-    const panel = styles.getPropertyValue('--panel').trim() || '#ffffff';
-    const tiles = TILE_STYLE[document.documentElement.dataset.theme] || 'light_all';
-
-    courseMap = L.map(box, { scrollWheelZoom: false, dragging: !L.Browser.mobile, zoomSnap: 0.5 });
-    L.tileLayer(`https://{s}.basemaps.cartocdn.com/${tiles}/{z}/{x}/{y}{r}.png`, {
-      subdomains: 'abcd',
-      maxZoom: 19,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
-    }).addTo(courseMap);
-
-    courseMap.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
-
-    const markers = buildings.map((b) => {
-      const hasLecture = [...b.rooms.values()].includes('lecture');
-      const marker = L.circleMarker([b.geo.lat, b.geo.lng], {
-        radius: 9, weight: 3, color: accent, fillColor: hasLecture ? accent : panel, fillOpacity: 1,
-      }).addTo(courseMap).bindPopup(popupHTML(b));
-      return { marker, label: b.geo.short, at: [b.geo.lat, b.geo.lng] };
-    });
-
-    // Names sit on the pins when there is room for them. In a crowded cluster they would overlap,
-    // so there they show on hover until the map is zoomed in far enough.
-    let labelsShown = null;
-    const syncLabels = () => {
-      const show = markers.length <= 5 || courseMap.getZoom() >= 17.5;
-      if (show === labelsShown) return;
-      labelsShown = show;
-      markers.forEach(({ marker, label }) => {
-        marker.unbindTooltip().bindTooltip(label, { permanent: show, direction: 'top', offset: [0, -8], className: 'map-label' });
-      });
-    };
-
-    const points = markers.map((m) => m.at);
-    if (points.length === 1) courseMap.setView(points[0], 17);
-    else courseMap.fitBounds(points, { padding: [44, 44], maxZoom: 17 });
-    syncLabels();
-    courseMap.on('zoomend', syncLabels);
-    setTimeout(() => courseMap?.invalidateSize(), 0);
-  } catch {
-    if (token !== mapToken || !box.isConnected) return;
-    box.classList.add('offline');
-    box.innerHTML = `<div class="detail muted">Couldn’t load the live map (are you offline?), so here is a rough sketch instead.</div>${schematicMapHTML(course)}`;
-  }
-}
-
-// Offline fallback: the old hand-drawn sketch. Positions are made up, not real.
-function pinFor(room) {
-  const key = buildingKey(room);
-  return key ? BUILDING_PINS[key] : null;
-}
-
-function schematicMapHTML(course) {
-  const pins = new Map();
-  Object.values(course.offerings).forEach((o) => {
-    [...o.lectures, ...(o.discussions || [])].forEach((m) => {
-      const pin = pinFor(m.room);
-      if (pin) pins.set(m.room, pin);
-    });
-  });
-  if (!pins.size) return '';
-
-  const markers = [...pins].map(([room, [x, y]]) => `
-    <circle cx="${x}" cy="${y}" r="2.4" fill="var(--accent)"/>
-    <text x="${x + 3.5}" y="${y + 1.5}" font-size="3.6" fill="var(--ink)">${room.length > 14 ? room.slice(0, 14) + '…' : room}</text>`
-  ).join('');
-
-  return `
-    <svg viewBox="0 0 100 80" width="100%" style="border:1px solid var(--line);border-radius:6px;background:var(--wash)">
-      <rect x="16" y="20" width="36" height="34" rx="3" fill="var(--line)"/>
-      <text x="34" y="37" font-size="4" fill="var(--muted)" text-anchor="middle">Main Quad</text>
-      <ellipse cx="40" cy="72" rx="16" ry="5" fill="var(--line)"/>
-      ${markers}
-    </svg>`;
+    ${campusMapHTML(points, { ratio: 2.2, minWidth: 0.26, large: true })}
+    <div class="map-note">${legend}${missingRoom ? ' · some meetings have no room yet' : ''} · ${mapCreditHTML()}</div>`;
 }
 
 /* ---------- Overview ---------- */
@@ -274,7 +125,6 @@ function sectionsHTML(course) {
 function openOverview(code) {
   const course = findCourse(code);
   ui.openCourse = course;
-  destroyCourseMap();
   const rating = latestRating(course);
 
   const addButtons = QUARTERS
@@ -308,13 +158,9 @@ function openOverview(code) {
 
   $('#overlay').hidden = false;
   $('#overlay-card').scrollTop = 0;
-  renderCourseMap(course);
 }
 
-function closeOverview() {
-  $('#overlay').hidden = true;
-  destroyCourseMap();
-}
+const closeOverview = () => ($('#overlay').hidden = true);
 
 function similarHTML(course) {
   const list = similarCourses(course);
