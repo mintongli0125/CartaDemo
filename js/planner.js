@@ -75,6 +75,53 @@ function courseRowHTML(item, index, quarterId) {
     </div>`;
 }
 
+// Where this quarter's lectures and chosen discussion sections are: one dot per course per building,
+// in the course's calendar colour. Filled = a lecture is there, ring = only a discussion section.
+function quarterMapHTML(items, quarterId) {
+  const byBuilding = new Map();
+  const unplaced = [];
+
+  items.forEach((item) => {
+    let placed = false;
+    selectedMeetings(item, quarterId).forEach((m) => {
+      const key = buildingKey(m.room);
+      if (!key) return;
+      placed = true;
+      const pin = BUILDING_PINS[key];
+      const building = byBuilding.get(pin.name) || { pin, entries: new Map() };
+      const entry = building.entries.get(item.code) || { item, rooms: new Set(), lecture: false };
+      entry.rooms.add(m.room);
+      if (!m.isDiscussion) entry.lecture = true;
+      building.entries.set(item.code, entry);
+      byBuilding.set(pin.name, building);
+    });
+    if (!placed) unplaced.push(item.code);
+  });
+
+  if (!byBuilding.size) {
+    return `<div class="map-empty muted">No rooms known yet for ${unplaced.join(', ')}, so no map.</div>`;
+  }
+
+  const points = [...byBuilding.values()].flatMap(({ pin, entries }) => {
+    const list = [...entries.values()];
+    return list.map((entry, i) => ({
+      x: pin.x,
+      y: pin.y,
+      color: entry.item.color,
+      hollow: !entry.lecture,
+      dx: (i - (list.length - 1) / 2) * 12, // courses sharing a building sit side by side
+      open: entry.item.code,
+      title: `${entry.item.code} · ${pin.name}\n${[...entry.rooms].join(', ')}`,
+    }));
+  });
+
+  return `<div class="quarter-map">
+    ${campusMapHTML(points, { ratio: 4 / 3 })}
+    <div class="map-note"><span class="pin on"></span>lecture <span class="pin"></span>discussion${unplaced.length ? ` · no room yet: ${unplaced.join(', ')}` : ''}</div>
+    <div class="map-note">${mapCreditHTML()}</div>
+  </div>`;
+}
+
 function quarterHTML({ id, name }) {
   const items = plan[id];
   const blocks = collectBlocks(items, id);
@@ -93,6 +140,7 @@ function quarterHTML({ id, name }) {
     ? `<span class="conflict-note">⚠ ${conflictingCourses} course${conflictingCourses > 1 ? 's' : ''} in conflict</span>`
     : `<span class="muted">${items.length ? 'No conflicts' : ''}</span>`;
 
+  const mapBlock = items.length ? quarterMapHTML(items, id) : '';
   const dropState = ui.draggingCode
     ? (isOffered(findCourse(ui.draggingCode), id) ? 'accepts' : 'rejects')
     : '';
@@ -105,8 +153,11 @@ function quarterHTML({ id, name }) {
         ${meterHTML('Hours / week', hoursText, (hours / HOURS_LIMIT) * 100, hours > HOURS_LIMIT ? 'secondary over' : 'secondary')}
       </div>
       ${calendarHTML(blocks, conflicts)}
-      <div class="rows">
-        ${items.map((item, i) => courseRowHTML(item, i, id)).join('') || '<div class="empty">Drag a course here</div>'}
+      <div class="quarter-lower ${mapBlock.startsWith('<div class="quarter-map"') ? 'with-map' : ''}">
+        <div class="rows">
+          ${items.map((item, i) => courseRowHTML(item, i, id)).join('') || '<div class="empty">Drag a course here</div>'}
+        </div>
+        ${mapBlock}
       </div>
     </section>`;
 }
