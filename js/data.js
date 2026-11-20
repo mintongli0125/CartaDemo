@@ -90,12 +90,16 @@ function normalizeCourse(raw) {
   const ways = raw.general_requirements.filter((r) => r.startsWith('WAY-')).map((r) => r.slice(4));
   const ger = raw.general_requirements.find((r) => r.startsWith('GER:'))?.slice(4).replace(/,$/, '');
   const notes = raw.offerings.map((o) => o.notes || '').join(' ');
+  const units = Number(raw.min_units) || 0;
+  const reportedHours = raw.average_hours_spent;
+  const hasReportedHours = reportedHours != null && reportedHours !== '' && Number.isFinite(Number(reportedHours));
 
   return {
     code,
     title: raw.title,
-    units: raw.min_units,
-    hours: raw.average_hours_spent ? Number(raw.average_hours_spent) : null,
+    units,
+    // Use reported workload when available; otherwise estimate 3 hours per unit per week.
+    hours: hasReportedHours ? Number(reportedHours) : units * 3,
     grading: raw.grading.replace('Satisfactory/No Credit', 'S/NC').replace('Credit/No Credit', 'CR/NC'),
     ratings: ratingHistory(raw.ratings),
     description: raw.description,
