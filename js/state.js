@@ -253,28 +253,54 @@ function mapWindow(points, ratio, { minWidth = 0.2, pad = 0.06 } = {}) {
 
 const attr = (text) => String(text ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
 
+// A teardrop map pin with its tip at the bottom centre. Filled = lecture, white with a coloured rim = discussion.
+function pinSVG(color = 'var(--accent)', hollow = false, width = 22) {
+  const height = Math.round((width * 32) / 24);
+  return `<svg viewBox="0 0 24 32" width="${width}" height="${height}" aria-hidden="true"
+      style="display:block;overflow:visible;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.55))">
+    <path d="M12 30.5C12 30.5 2 19 2 11.5a10 10 0 0 1 20 0C22 19 12 30.5 12 30.5Z"
+          fill="${hollow ? '#fff' : color}" stroke="${hollow ? color : '#fff'}" stroke-width="2.4" stroke-linejoin="round"/>
+    <circle cx="12" cy="11.5" r="4" fill="${hollow ? color : '#fff'}"/>
+  </svg>`;
+}
+
+// Tiny pin for the "lecture / discussion" key under a map.
+const legendPin = (hollow) =>
+  `<span style="display:inline-block;margin:0 3px 0 7px;vertical-align:-2px">${pinSVG('var(--accent)', hollow, 9)}</span>`;
+
 // points: [{ x, y, color?, hollow?, label?, title?, open?, dx? }], x and y in % of the picture.
-// Draws the picture zoomed onto the pins, with a dot (and optional name) on each.
-function campusMapHTML(points, { ratio = 2, minWidth, pad, large = false } = {}) {
+// Draws the picture zoomed onto the pins and sticks a pin on each. Size and position are set inline on purpose,
+// so the map keeps its size and its pins even if styles.css is stale or cached.
+function campusMapHTML(points, { ratio = 1.5, minWidth, pad, maxWidth = 340, pinWidth = 22 } = {}) {
   const W = CAMPUS_MAP.width;
   const H = CAMPUS_MAP.height;
   const win = mapWindow(points, ratio, { minWidth, pad });
+  const pinHeight = Math.round((pinWidth * 32) / 24);
 
   // Alternate name tags above and below the pin so neighbours do not sit on top of each other.
   points.filter((p) => p.label).sort((a, b) => a.x - b.x).forEach((p, i) => { p.place = i % 2 ? 'below' : 'above'; });
 
-  const imgStyle = `width:${((W / win.w) * 100).toFixed(2)}%;left:${((-win.x / win.w) * 100).toFixed(2)}%;top:${((-win.y / win.h) * 100).toFixed(2)}%`;
-  const pins = points.map((p) => {
+  const box = `position:relative;overflow:hidden;isolation:isolate;width:100%;max-width:${maxWidth}px;aspect-ratio:${ratio};`
+    + 'background:var(--wash,#eee);border:1px solid var(--line,#ddd);border-radius:8px;';
+  const img = `position:absolute;display:block;max-width:none;height:auto;width:${((W / win.w) * 100).toFixed(2)}%;`
+    + `left:${((-win.x / win.w) * 100).toFixed(2)}%;top:${((-win.y / win.h) * 100).toFixed(2)}%;user-select:none;`;
+  const tag = (place) => 'position:absolute;left:50%;transform:translateX(-50%);padding:2px 5px;white-space:nowrap;pointer-events:none;'
+    + 'font:600 10px/1.1 var(--font,sans-serif);color:#222;background:#fff;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,.35);'
+    + (place === 'below' ? 'top:calc(100% + 3px);' : 'bottom:calc(100% + 3px);');
+
+  // Lower pins are drawn on top of higher ones, like a real map.
+  const pins = [...points].sort((a, b) => a.y - b.y).map((p, i) => {
     const left = ((((p.x / 100) * W - win.x) / win.w) * 100).toFixed(2);
     const top = ((((p.y / 100) * H - win.y) / win.h) * 100).toFixed(2);
-    return `<span class="map-pin ${p.hollow ? 'hollow' : ''} ${p.place || ''}"
-        style="left:${left}%;top:${top}%;--pin:${p.color || 'var(--accent)'};--dx:${p.dx || 0}px"
-        ${p.open ? `data-open="${attr(p.open)}"` : ''} title="${attr(p.title)}">${p.label ? `<b>${p.label}</b>` : ''}</span>`;
+    return `<span class="pin-marker" ${p.open ? `data-open="${attr(p.open)}"` : ''} title="${attr(p.title)}"
+        style="position:absolute;left:${left}%;top:${top}%;width:${pinWidth}px;height:${pinHeight}px;z-index:${i + 1};cursor:pointer;`
+      + `transform:translate(calc(-50% + ${p.dx || 0}px),-100%)">${pinSVG(p.color || 'var(--accent)', p.hollow, pinWidth)}`
+      + `${p.label ? `<b style="${tag(p.place)}">${p.label}</b>` : ''}</span>`;
   }).join('');
 
-  return `<div class="campus-map ${large ? 'large' : ''}" style="aspect-ratio:${ratio}">
-    <img src="${CAMPUS_MAP.src}" alt="Stanford campus map" draggable="false" style="${imgStyle}"
-         onerror="this.parentNode.classList.add('broken')">${pins}</div>`;
+  const missing = "this.parentNode.innerHTML='<div style=&quot;display:grid;place-items:center;height:100%;padding:8px;text-align:center;font-size:11px&quot;>Map picture not found: add img/campus-map.webp</div>'";
+  return `<div class="campus-map" style="${box}">
+    <img src="${CAMPUS_MAP.src}" alt="Stanford campus map" draggable="false" style="${img}" onerror="${missing}">${pins}</div>`;
 }
 
 const mapCreditHTML = () =>
