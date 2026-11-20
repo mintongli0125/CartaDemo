@@ -11,6 +11,9 @@ const findCourse = (code) => COURSES.find((c) => c.code === code);
 const findQuarter = (id) => QUARTERS.find((q) => q.id === id);
 const isOffered = (course, quarterId) => Boolean(course.offerings[quarterId]);
 const latestRating = (course) => (course.ratings.length ? course.ratings.at(-1) : null);
+// Real hours when we have them, otherwise units x HOURS_PER_UNIT. Display code still shows 'n/a'.
+const hoursEstimated = (course) => course.hours == null;
+const effectiveHours = (course) => course.hours ?? course.units * HOURS_PER_UNIT;
 const wayTags = (course) => (course.ways || []).map((w) => `<span class="way-tag">${w}</span>`).join('');
 const dayList = (days) => [...days].map((d) => DAY_NAMES[d]).join('/');
 
