@@ -19,33 +19,52 @@ const BUILDING_PINS = {
   STLC: [14, 66], Shriram: [72, 58], Lathrop: [22, 24],
 };
 
+const LATHROP = { name: 'Lathrop Library (home of Bishop Auditorium)', short: 'Lathrop', lat: 37.429216, lng: -122.167296 };
+const BUILDING_GEO = {
+  '460': { name: 'Margaret Jacks Hall (Building 460)', short: 'Bldg 460', lat: 37.428271, lng: -122.169984 },
+  '200': { name: 'Lane History Corner (Building 200)', short: 'Bldg 200', lat: 37.428072, lng: -122.168558 },
+  '160': { name: 'Wallenberg Hall (Building 160)', short: 'Bldg 160', lat: 37.428270, lng: -122.169017 },
+  '260': { name: 'Pigott Hall (Building 260)', short: 'Bldg 260', lat: 37.426360, lng: -122.169147 },
+  '320': { name: 'Braun Corner (Building 320)', short: 'Bldg 320', lat: 37.426941, lng: -122.171887 },
+  '80': { name: 'Building 80, Inner Quad', short: 'Bldg 80', lat: 37.427484, lng: -122.171415 },
+  '30': { name: 'Building 30, Inner Quad', short: 'Bldg 30', lat: 37.427017, lng: -122.169224 },
+  '50': { name: 'Building 50, Inner Quad', short: 'Bldg 50', lat: 37.426961, lng: -122.169914 },
+  Bishop: LATHROP,
+  Lathrop: LATHROP,
+  Hewlett: { name: 'Hewlett Teaching Center', short: 'Hewlett', lat: 37.429000, lng: -122.172855 },
+  Cemex: { name: 'CEMEX Auditorium (Knight Management Center, GSB)', short: 'Cemex', lat: 37.428550, lng: -122.162785 },
+  STLC: { name: 'Science Teaching and Learning Center (STLC)', short: 'STLC', lat: 37.430657, lng: -122.171437 },
+  Shriram: { name: 'Shriram Center for Bioengineering & Chemical Engineering', short: 'Shriram', lat: 37.428986, lng: -122.175178 },
+};
+
 /*
   offerings: { [quarterId]: { lectures: [meeting], discussions?: [meeting], tba?: true } }
   A course with no offerings can't be dropped into any quarter.
-  ratings: oldest to newest average rating.
+  ratings: oldest to newest average rating. ratingTerms: the quarter of each one (same order), e.g. 'W19' = Winter 2019.
 */
 const COURSES = [
   {
     code: 'CS 1C', title: 'Introduction to Computing at Stanford',
-    units: 1, hours: 1.38, grading: 'S/NC', ratings: [4.3, 4.3, 4.2, 4.3],
+    units: 1, hours: 1.38, grading: 'S/NC', ratings: [4.3, 4.3, 4.2, 4.3], ratingTerms: ['A16', 'A17', 'A18', 'A19'],
     description: 'Computer maintenance, security, internet privacy and copyright. Weekly dorm talks by Student Technology. Not a programming course.',
     offerings: {},
   },
   {
     code: 'CS 1U', title: 'Practical Unix',
-    units: 1, hours: 2.7, grading: 'S/NC', ratings: [3.3, 3.6, 3.8, 3.5, 3.7, 3.9, 3.4, 3.6],
+    units: 1, hours: 2.7, grading: 'S/NC', ratings: [3.3, 3.6, 3.8, 3.5, 3.7, 3.9, 3.4, 3.7, 3.6, 4.1, 3.6, 3.4, 3.6],
+    ratingTerms: ['A16', 'W17', 'S17', 'A17', 'W18', 'S18', 'A18', 'W19', 'S19', 'A19', 'A20', 'W21', 'S21'],
     description: 'Linux command line: grep, regex, ZSH, Vim/Emacs, GDB, permissions, revision control, Python scripting. The 2021–22 sections were cancelled.',
     offerings: {},
   },
   {
     code: 'CS 7', title: 'Personal Finance for Engineers',
-    units: 1, hours: 1.63, grading: 'S/NC', ratings: [4.7, 4.7, 4.8],
+    units: 1, hours: 1.63, grading: 'S/NC', ratings: [4.7, 4.7, 4.8], ratingTerms: ['A18', 'A19', 'A20'],
     description: 'Budgeting, debt, compensation, stock options, investing and real estate using real tech-company data. No finance background needed.',
     offerings: { A: { lectures: [meeting('T', '1730', '1900', 'STLC 111', 'Adam Nash')] } },
   },
   {
     code: 'CS 9', title: 'Problem-Solving for the CS Technical Interview',
-    units: 1, hours: null, grading: 'S/NC', ratings: [4.3, 4.1], prereqs: 'CS 106B or X',
+    units: 1, hours: null, grading: 'S/NC', ratings: [4.3, 4.1], ratingTerms: ['A16', 'A17'], prereqs: 'CS 106B or X',
     description: 'Prepare for coding interviews: problem-solving strategy and oral/written-oral communication.',
     offerings: { A: { lectures: [meeting('T', '1730', '1930', 'Shriram BioChemE 104', 'Ian Tullis, Andrew Benson')] } },
   },
@@ -75,13 +94,14 @@ const COURSES = [
   },
   {
     code: 'CS 22A', title: 'The Social & Economic Impact of AI',
-    units: 1, hours: 1.84, grading: 'S/NC', ratings: [4.2, 4.3, 4.2],
+    units: 1, hours: 1.84, grading: 'S/NC', ratings: [4.2, 4.3, 4.2], ratingTerms: ['S17', 'W18', 'W19'],
     description: 'Jobs, bias, justice, democracy and warfare in an age of intelligent machines.',
     offerings: { W: { lectures: [meeting('R', '1330', '1430', 'Cemex Auditorium', 'Samuel Kaplan')] } },
   },
   {
     code: 'CS 24', title: 'Minds and Machines',
     units: 4, hours: 8.73, grading: 'Letter or CR/NC', ratings: [3.4, 3.3, 2.9, 4.2, 3.5, 4.3, 4.4],
+    ratingTerms: ['A16', 'A17', 'W19', 'Su19', 'A19', 'A20', 'W21'],
     ways: ['FR'], ger: 'DB-SocSci', alsoListedAs: 'SYMSYS 1, PHIL 99, PSYCH 35, LINGUIST 35',
     description: 'Interdisciplinary study of cognition, computation, rationality and language. Required before declaring Symbolic Systems.',
     offerings: {
@@ -114,19 +134,19 @@ const COURSES = [
   },
   {
     code: 'CS 28', title: 'AI, Entrepreneurship and Society',
-    units: 2, hours: 2.15, grading: 'S/NC', ratings: [4.2],
+    units: 2, hours: 2.15, grading: 'S/NC', ratings: [4.2], ratingTerms: ['A19'],
     description: 'Co-taught by a professor and a VC: AI capabilities, startup opportunities and long-term societal impact.',
     offerings: {},
   },
   {
     code: 'CS 31N', title: 'Counterfactuals: The Science of What Ifs?',
-    units: 3, hours: 6.38, grading: 'Letter or CR/NC', ratings: [4.4],
+    units: 3, hours: 6.38, grading: 'Letter or CR/NC', ratings: [4.4], ratingTerms: ['S21'],
     description: 'Quantitative counterfactual reasoning applied to climate change, healthcare and economics. No probability background needed.',
     offerings: { U: { lectures: [], tba: true } },
   },
   {
     code: 'CS 41', title: 'Hap.py Code: The Python Programming Language',
-    units: 2, hours: 5.29, grading: 'S/NC', ratings: [4.7, 4.7, 4.5], prereqs: 'CS 106B or X',
+    units: 2, hours: 5.29, grading: 'S/NC', ratings: [4.7, 4.7, 4.5], ratingTerms: ['S17', 'W19', 'S21'], prereqs: 'CS 106B or X',
     description: 'Pythonic conventions, comprehensions, iterables, built-ins and libraries, ending in a significant Python project.',
     offerings: { S: { lectures: [meeting('TR', '1515', '1645', null, 'Jerry Cain')] } },
   },
