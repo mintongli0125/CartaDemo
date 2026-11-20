@@ -116,7 +116,7 @@ function quarterMapHTML(items, quarterId) {
   });
 
   return `<div class="quarter-map">
-    ${campusMapHTML(points, { ratio: 4 / 3, maxWidth: 200, pinWidth: 14 })}
+    ${campusMapHTML(points, { id: `quarter:${quarterId}`, ratio: 4 / 3, maxWidth: 200, pinWidth: 14 })}
     <div class="map-note">${legendPin(false)}lecture ${legendPin(true)}discussion${unplaced.length ? ` · no room yet: ${unplaced.join(', ')}` : ''}</div>
     <div class="map-note">${mapCreditHTML()}</div>
   </div>`;
