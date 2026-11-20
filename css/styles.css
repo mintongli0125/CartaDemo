@@ -18,8 +18,8 @@
   --line: #e5d9d6;
   --radius: 10px;
   --bad: #d32f2f;
-  --font: "Source Sans 3", "Source Sans Pro", "Segoe UI", system-ui, sans-serif;
-  --font-head: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+  --font: "Source Sans 3", "Source Sans Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-head: var(--font); /* one family for everything in the cardinal theme */
   --fs: 14px;
   --hour: 22px; /* overwritten from JS (HOUR_PX) */
 
