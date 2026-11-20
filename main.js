@@ -114,5 +114,21 @@ $('#quarters').addEventListener('drop', (e) => {
 document.documentElement.style.setProperty('--hour', `${HOUR_PX}px`);
 loadInitialTheme();
 renderThemeButtons();
-renderCatalog();
-renderPlanner();
+
+async function boot() {
+  $('#catalog').innerHTML = '<div class="empty">Loading courses…</div>';
+  try {
+    await loadCourses();
+  } catch (err) {
+    $('#catalog').innerHTML = `<div class="empty">Couldn’t load course data (${err.message}). Check your connection and refresh.</div>`;
+    return;
+  }
+
+  // Drop saved entries for courses that no longer exist in the data
+  QUARTERS.forEach((q) => { plan[q.id] = plan[q.id].filter((i) => findCourse(i.code)); });
+
+  renderCatalog();
+  renderPlanner();
+}
+
+boot();
