@@ -15,9 +15,16 @@ const latestRating = (course) => (course.ratings.length ? course.ratings.at(-1) 
 const hoursEstimated = (course) => course.hours == null;
 const effectiveHours = (course) => course.hours ?? course.units * HOURS_PER_UNIT;
 const wayTags = (course) => (course.ways || []).map((w) => `<span class="way-tag">${w}</span>`).join('');
-// Rating drawn as five stars, the last one partly filled (4.3 -> four stars and a bit)
-const starsHTML = (rating) => (rating == null ? '' :
-  `<span class="stars" style="--fill:${Math.min(100, (rating / 5) * 100).toFixed(1)}%" role="img" aria-label="${rating} out of 5">★★★★★</span>`);
+// Rating drawn as five stars, the last one partly filled (4.3 -> four stars and a bit).
+// Styled inline on purpose: grey stars underneath, gold copy on top clipped to the rating's width.
+// It needs nothing from styles.css, so a stale or cached stylesheet can't turn every star gold.
+const starsHTML = (rating) => {
+  if (rating == null) return '';
+  const pct = Math.max(0, Math.min(100, (rating / 5) * 100)).toFixed(1);
+  const base = 'position:relative;display:inline-block;white-space:nowrap;line-height:1;vertical-align:-1px;color:var(--line,#d8d8d8);-webkit-text-fill-color:currentColor;';
+  const fill = `position:absolute;left:0;top:0;width:${pct}%;overflow:hidden;white-space:nowrap;color:var(--star,#d98e04);-webkit-text-fill-color:currentColor;`;
+  return `<span class="rating-stars" role="img" aria-label="${rating} out of 5" style="${base}">★★★★★<span aria-hidden="true" style="${fill}">★★★★★</span></span>`;
+};
 const dayList = (days) => [...days].map((d) => DAY_NAMES[d]).join('/');
 
 // Lecture + chosen discussion for a planned course, tagged so discussions render differently
@@ -194,3 +201,81 @@ function similarCourses(course, limit = 3) {
 
   return [...pinned, ...computed].slice(0, limit);
 }
+
+/* ---------- Campus map picture ---------- */
+
+// Which building a room belongs to. "460-334" matches by building number, "Hewlett 200" by name.
+const buildingKey = (room) => (room
+  ? Object.keys(BUILDING_PINS).find((k) => (/^\d/.test(k) ? room.split('-')[0] === k : room.includes(k)))
+  : null);
+
+// Buildings a course uses: [{ pin, rooms: Map(room -> 'lecture' | 'discussion') }]
+function buildingsFor(course) {
+  const groups = new Map();
+  Object.values(course.offerings).forEach((offering) => {
+    const meetings = [
+      ...offering.lectures.map((m) => [m, 'lecture']),
+      ...(offering.discussions || []).map((m) => [m, 'discussion']),
+    ];
+    meetings.forEach(([m, kind]) => {
+      const key = buildingKey(m.room);
+      if (!key) return;
+      const pin = BUILDING_PINS[key];
+      const group = groups.get(pin.name) || { pin, rooms: new Map() };
+      if (!group.rooms.has(m.room) || kind === 'lecture') group.rooms.set(m.room, kind);
+      groups.set(pin.name, group);
+    });
+  });
+  return [...groups.values()];
+}
+
+// The part of the picture to show: tight around the pins, never closer than `minWidth` of the picture.
+function mapWindow(points, ratio, { minWidth = 0.2, pad = 0.06 } = {}) {
+  const W = CAMPUS_MAP.width;
+  const H = CAMPUS_MAP.height;
+  const xs = points.map((p) => (p.x / 100) * W);
+  const ys = points.map((p) => (p.y / 100) * H);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  let w = points.length ? Math.max(maxX - minX + 2 * pad * W, minWidth * W) : W;
+  let h = points.length ? Math.max(maxY - minY + 2 * pad * W, (minWidth * W) / ratio) : H;
+  if (w / h < ratio) w = h * ratio; else h = w / ratio;
+  if (w > W) { w = W; h = w / ratio; }
+  if (h > H) { h = H; w = h * ratio; }
+
+  const cx = points.length ? (minX + maxX) / 2 : W / 2;
+  const cy = points.length ? (minY + maxY) / 2 : H / 2;
+  return { x: Math.min(W - w, Math.max(0, cx - w / 2)), y: Math.min(H - h, Math.max(0, cy - h / 2)), w, h };
+}
+
+const attr = (text) => String(text ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+
+// points: [{ x, y, color?, hollow?, label?, title?, open?, dx? }], x and y in % of the picture.
+// Draws the picture zoomed onto the pins, with a dot (and optional name) on each.
+function campusMapHTML(points, { ratio = 2, minWidth, pad, large = false } = {}) {
+  const W = CAMPUS_MAP.width;
+  const H = CAMPUS_MAP.height;
+  const win = mapWindow(points, ratio, { minWidth, pad });
+
+  // Alternate name tags above and below the pin so neighbours do not sit on top of each other.
+  points.filter((p) => p.label).sort((a, b) => a.x - b.x).forEach((p, i) => { p.place = i % 2 ? 'below' : 'above'; });
+
+  const imgStyle = `width:${((W / win.w) * 100).toFixed(2)}%;left:${((-win.x / win.w) * 100).toFixed(2)}%;top:${((-win.y / win.h) * 100).toFixed(2)}%`;
+  const pins = points.map((p) => {
+    const left = ((((p.x / 100) * W - win.x) / win.w) * 100).toFixed(2);
+    const top = ((((p.y / 100) * H - win.y) / win.h) * 100).toFixed(2);
+    return `<span class="map-pin ${p.hollow ? 'hollow' : ''} ${p.place || ''}"
+        style="left:${left}%;top:${top}%;--pin:${p.color || 'var(--accent)'};--dx:${p.dx || 0}px"
+        ${p.open ? `data-open="${attr(p.open)}"` : ''} title="${attr(p.title)}">${p.label ? `<b>${p.label}</b>` : ''}</span>`;
+  }).join('');
+
+  return `<div class="campus-map ${large ? 'large' : ''}" style="aspect-ratio:${ratio}">
+    <img src="${CAMPUS_MAP.src}" alt="Stanford campus map" draggable="false" style="${imgStyle}"
+         onerror="this.parentNode.classList.add('broken')">${pins}</div>`;
+}
+
+const mapCreditHTML = () =>
+  `Map: <a href="${CAMPUS_MAP.source}" target="_blank" rel="noopener">${CAMPUS_MAP.credit}</a>`;
