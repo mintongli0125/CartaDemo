@@ -9,7 +9,7 @@ function statsText(course) {
   return [
     `${course.units} unit${course.units > 1 ? 's' : ''}`,
     course.hours != null ? `~${course.hours} h/wk` : 'hours n/a',
-    rating ? `★ ${rating}` : 'unrated',
+    rating ? `${starsHTML(rating)} ${rating}` : 'unrated',
     course.application && 'application',
   ].filter(Boolean).join(' · ');
 }
