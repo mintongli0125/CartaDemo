@@ -296,49 +296,13 @@ body.dragging .quarter.rejects::after {
 .rating-chart { display: block; width: 100%; height: auto; }
 .rating-chart text { font-family: var(--font); }
 
-/* ---------- Campus map picture + pins ---------- */
-.campus-map {
-  position: relative; overflow: hidden; isolation: isolate;
-  background: var(--wash);
-  border: 1px solid var(--line); border-radius: calc(var(--radius) / 1.5);
-}
-.campus-map img { position: absolute; display: block; max-width: none; user-select: none; -webkit-user-drag: none; }
-.campus-map.broken::after {
-  content: "Map picture not found: add img/campus-map.webp";
-  position: absolute; inset: 0; display: grid; place-items: center; padding: 10px;
-  font-size: 11px; text-align: center; color: var(--muted);
-}
-.map-pin {
-  position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px;
-  border-radius: 50%; background: var(--pin, var(--accent)); border: 3px solid #fff;
-  box-shadow: 0 0 0 1.5px var(--pin, var(--accent)), 0 1px 4px #0007;
-  transform: translateX(var(--dx, 0px)); cursor: pointer;
-}
-.map-pin.hollow { background: #fff; }
-.map-pin:hover { z-index: 3; transform: translateX(var(--dx, 0px)) scale(1.25); }
-.map-pin b {
-  position: absolute; left: 50%; transform: translateX(-50%);
-  padding: 2px 5px; white-space: nowrap; pointer-events: none;
-  font: 600 10px/1.1 var(--font); color: #222; background: #fff;
-  border-radius: 3px; box-shadow: 0 1px 3px #0005;
-}
-.campus-map.large .map-pin { width: 18px; height: 18px; margin: -9px 0 0 -9px; }
-.campus-map.large .map-pin b { padding: 2px 6px; font-size: 11px; }
-.map-pin.above b { bottom: calc(100% + 4px); }
-.map-pin.below b { top: calc(100% + 4px); }
-
+/* ---------- Campus map (size, picture and pins are styled inline by campusMapHTML) ---------- */
+.pin-marker:hover { z-index: 999 !important; }
 .map-note { margin-top: 6px; font-size: 11px; color: var(--muted); }
 .map-note a { color: inherit; }
-.pin {
-  display: inline-block; width: 9px; height: 9px; margin: 0 4px 0 8px;
-  border: 2px solid var(--accent); border-radius: 50%; background: var(--panel); vertical-align: -1px;
-}
-.pin.on { background: var(--accent); }
-.map-note .pin:first-child { margin-left: 0; }
-
 /* ---------- Under each quarter's calendar: course rows, plus a mini map when rooms are known ---------- */
 .quarter-lower { margin-top: 8px; }
 .quarter-lower .rows { margin-top: 0; }
-.quarter-lower.with-map { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 10px; align-items: start; }
+.quarter-lower.with-map { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 10px; align-items: start; }
 .map-empty { margin-top: 6px; font-size: 11px; }
 @media (max-width: 820px) { .quarter-lower.with-map { grid-template-columns: 1fr; } }
