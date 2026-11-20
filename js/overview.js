@@ -96,22 +96,42 @@ const closeOverview = () => ($('#overlay').hidden = true);
 
 /* ---------- Compare ---------- */
 
-function showComparePicker() {
-  const options = COURSES
-    .filter((c) => c !== ui.openCourse)
-    .map((c) => `<option value="${c.code}">${c.code}: ${c.title}</option>`)
-    .join('');
-  $('#compare-slot').innerHTML = `<select id="compare-select"><option value="">Compare with…</option>${options}</select>`;
+function comparePickHTML(course) {
+  return `
+    <button class="pick" data-compare="${course.code}">
+      <span class="pick-title"><b>${course.code}</b> ${course.title}</span>
+      <span class="pick-meta">${statsText(course)} <span class="pick-q">${quarterTagsHTML(course)}</span></span>
+    </button>`;
 }
 
-function compareBars(label, a, b, max, format, nameA, nameB) {
-  const show = (v) => (v == null ? 'n/a' : format(v));
-  const width = (v) => ((v || 0) / max) * 100;
+function renderCompareResults() {
+  const query = ($('#compare-search')?.value || '').trim().toLowerCase();
+  const matches = COURSES
+    .filter((c) => c !== ui.openCourse)
+    .filter((c) => !query || `${c.code} ${c.title} ${c.description}`.toLowerCase().includes(query))
+    .sort(SORTERS.code);
+  $('#compare-results').innerHTML = matches.map(comparePickHTML).join('') || '<div class="empty">No courses match.</div>';
+}
+
+function showComparePicker() {
+  $('#compare-slot').innerHTML = `
+    <div class="compare-picker">
+      <input type="search" id="compare-search" placeholder="Compare with… search title, code or topic" autocomplete="off">
+      <div id="compare-results"></div>
+    </div>`;
+  renderCompareResults();
+  $('#compare-search').focus();
+}
+
+// estA / estB: the value is a stand-in (shown as "n/a (≈ x est.)", bar striped)
+function compareBars(label, a, b, max, format, nameA, nameB, estA = false, estB = false) {
+  const show = (v, est) => (v == null ? 'n/a' : est ? `n/a (≈ ${format(v)} est.)` : format(v));
+  const width = (v) => Math.min(100, ((v || 0) / max) * 100);
   return `
     <div class="compare-row">
-      <label><span>${label}</span><span>${nameA} ${show(a)} · ${nameB} ${show(b)}</span></label>
-      <div class="bar"><i style="width:${width(a)}%"></i></div>
-      <div class="bar"><i class="secondary" style="width:${width(b)}%"></i></div>
+      <label><span>${label}</span><span>${nameA} ${show(a, estA)} · ${nameB} ${show(b, estB)}</span></label>
+      <div class="bar"><i class="${estA ? 'est' : ''}" style="width:${width(a)}%"></i></div>
+      <div class="bar"><i class="secondary ${estB ? 'est' : ''}" style="width:${width(b)}%"></i></div>
     </div>`;
 }
 
@@ -119,11 +139,16 @@ function compareComments(a, b) {
   const comments = [];
   const [ra, rb] = [latestRating(a), latestRating(b)];
 
-  if (a.hours != null && b.hours != null) {
-    const heavier = a.hours > b.hours ? a : b;
-    comments.push(`${heavier.code} is the heavier lift by about ${Math.abs(a.hours - b.hours).toFixed(1)} h/wk.`);
+  const [ha, hb] = [effectiveHours(a), effectiveHours(b)];
+  const guessed = [a, b].filter(hoursEstimated).map((c) => c.code);
+  if (Math.abs(ha - hb) < 0.05) {
+    comments.push('Workload looks about the same.');
   } else {
-    comments.push('Workload data is missing for one of these, so treat hours as unknown.');
+    const heavier = ha > hb ? a : b;
+    comments.push(`${heavier.code} is the heavier lift by about ${Math.abs(ha - hb).toFixed(1)} h/wk.`);
+  }
+  if (guessed.length) {
+    comments.push(`No hours data for ${guessed.join(' and ')}, so ${guessed.length > 1 ? 'they are' : 'it is'} estimated at ${HOURS_PER_UNIT} h/wk per unit.`);
   }
 
   if (ra && rb) {
@@ -157,7 +182,7 @@ function showComparison(a, b) {
     <div class="stat" style="margin-top:8px">
       <b>${a.code} vs ${b.code}</b>
       ${compareBars('Units', a.units, b.units, 5, plain, a.code, b.code)}
-      ${compareBars('Hours per week', a.hours, b.hours, 10, fixed1, a.code, b.code)}
+      ${compareBars('Hours per week', effectiveHours(a), effectiveHours(b), 10, fixed1, a.code, b.code, hoursEstimated(a), hoursEstimated(b))}
       ${compareBars('Latest rating', latestRating(a), latestRating(b), 5, fixed1, a.code, b.code)}
       ${compareBars('Quarters offered', quarterCount(a), quarterCount(b), 4, plain, a.code, b.code)}
       <div class="grid-2"><div>${a.code}${sparkline(a.ratings)}</div><div>${b.code}${sparkline(b.ratings)}</div></div>
