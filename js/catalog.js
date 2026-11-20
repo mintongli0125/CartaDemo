@@ -4,24 +4,20 @@ const SORTERS = {
   hours: (a, b) => (a.hours ?? Infinity) - (b.hours ?? Infinity),
 };
 
-function statsText(course) {
+function cardHTML(course) {
+  const available = Object.keys(course.offerings).length > 0;
   const rating = latestRating(course);
-  return [
+
+  const stats = [
     `${course.units} unit${course.units > 1 ? 's' : ''}`,
     course.hours != null ? `~${course.hours} h/wk` : 'hours n/a',
     rating ? `★ ${rating}` : 'unrated',
     course.application && 'application',
   ].filter(Boolean).join(' · ');
-}
 
-const quarterTagsHTML = (course) => QUARTERS.map((q) =>
-  `<span class="qtag ${isOffered(course, q.id) ? 'on' : ''}">${q.label}</span>`
-).join('');
-
-function cardHTML(course) {
-  const available = Object.keys(course.offerings).length > 0;
-  const stats = statsText(course);
-  const quarterTags = quarterTagsHTML(course);
+  const quarterTags = QUARTERS.map((q) =>
+    `<span class="qtag ${isOffered(course, q.id) ? 'on' : ''}">${q.label}</span>`
+  ).join('');
 
   return `
     <div class="card ${available ? '' : 'unavailable'}" draggable="${available}"
