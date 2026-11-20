@@ -11,30 +11,30 @@ const COLORS = ['#8c1515', '#00697d', '#175e54', '#b26f16', '#620059', '#4d4f53'
 const UNIT_LIMIT = 20;
 const HOURS_PER_UNIT = 3; // stand-in workload when a course has no hours data
 
-// Schematic campus positions (x, y on a 100x80 grid). Not real coordinates.
-const BUILDING_PINS = {
-  '460': [24, 40], '200': [40, 32], '160': [34, 26], '260': [38, 48],
-  '320': [50, 58], '80': [30, 50], '30': [44, 42], '50': [20, 56],
-  Bishop: [56, 20], Hewlett: [64, 40], Cemex: [86, 14],
-  STLC: [14, 66], Shriram: [72, 58], Lathrop: [22, 24],
+// The picture behind every map: a crop of Stanford Maps & Records' visitor map (Jan 2022), saved as img/campus-map.webp.
+// Pins are positions on that picture in % of its width and height, so no coordinates are needed anywhere.
+const CAMPUS_MAP = {
+  src: 'img/campus-map.webp', width: 2403, height: 1201,
+  credit: 'Stanford Maps & Records',
+  source: 'https://visit.stanford.edu/pdf/explore-campus/general_campus_self-guided_tour_map.pdf',
 };
-
-const LATHROP = { name: 'Lathrop Library (home of Bishop Auditorium)', short: 'Lathrop', lat: 37.429216, lng: -122.167296 };
-const BUILDING_GEO = {
-  '460': { name: 'Margaret Jacks Hall (Building 460)', short: 'Bldg 460', lat: 37.428271, lng: -122.169984 },
-  '200': { name: 'Lane History Corner (Building 200)', short: 'Bldg 200', lat: 37.428072, lng: -122.168558 },
-  '160': { name: 'Wallenberg Hall (Building 160)', short: 'Bldg 160', lat: 37.428270, lng: -122.169017 },
-  '260': { name: 'Pigott Hall (Building 260)', short: 'Bldg 260', lat: 37.426360, lng: -122.169147 },
-  '320': { name: 'Braun Corner (Building 320)', short: 'Bldg 320', lat: 37.426941, lng: -122.171887 },
-  '80': { name: 'Building 80, Inner Quad', short: 'Bldg 80', lat: 37.427484, lng: -122.171415 },
-  '30': { name: 'Building 30, Inner Quad', short: 'Bldg 30', lat: 37.427017, lng: -122.169224 },
-  '50': { name: 'Building 50, Inner Quad', short: 'Bldg 50', lat: 37.426961, lng: -122.169914 },
+const LATHROP = { name: 'Lathrop Library (home of Bishop Auditorium)', short: 'Lathrop', x: 61.95, y: 37.24 };
+// Keys are how rooms are recognised: a number matches the part before the dash ("460-334"), a word matches anywhere ("Hewlett 200").
+const BUILDING_PINS = {
+  '460': { name: 'Margaret Jacks Hall (Building 460)', short: 'Bldg 460', x: 40.43, y: 50.24 },
+  '200': { name: 'Lane History Corner (Building 200)', short: 'Bldg 200', x: 53.07, y: 60.64 },
+  '160': { name: 'Wallenberg Hall (Building 160)', short: 'Bldg 160', x: 49.82, y: 54.87 },
+  '260': { name: 'Pigott Hall (Building 260)', short: 'Bldg 260', x: 48.09, y: 89.83 },
+  '320': { name: 'Braun Corner (Building 320)', short: 'Bldg 320', x: 28.95, y: 78.7 },
+  '80': { name: 'Building 80, Inner Quad', short: 'Bldg 80', x: 32.63, y: 67.43 },
+  '30': { name: 'Building 30, Inner Quad', short: 'Bldg 30', x: 47.8, y: 77.83 },
+  '50': { name: 'Building 50, Inner Quad', short: 'Bldg 50', x: 43.03, y: 78.27 },
   Bishop: LATHROP,
   Lathrop: LATHROP,
-  Hewlett: { name: 'Hewlett Teaching Center', short: 'Hewlett', lat: 37.429000, lng: -122.172855 },
-  Cemex: { name: 'CEMEX Auditorium (Knight Management Center, GSB)', short: 'Cemex', lat: 37.428550, lng: -122.162785 },
-  STLC: { name: 'Science Teaching and Learning Center (STLC)', short: 'STLC', lat: 37.430657, lng: -122.171437 },
-  Shriram: { name: 'Shriram Center for Bioengineering & Chemical Engineering', short: 'Shriram', lat: 37.428986, lng: -122.175178 },
+  Hewlett: { name: 'Hewlett Teaching Center', short: 'Hewlett', x: 22.74, y: 39.26 },
+  Cemex: { name: 'CEMEX Auditorium (Knight Management Center, GSB)', short: 'Cemex', x: 93.86, y: 48.65 },
+  STLC: { name: 'Science Teaching and Learning Center (STLC)', short: 'STLC', x: 32.49, y: 10.66 },
+  Shriram: { name: 'Shriram Center for Bioengineering & Chemical Engineering', short: 'Shriram', x: 5.05, y: 40.71 },
 };
 
 /*
