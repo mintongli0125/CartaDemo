@@ -35,7 +35,6 @@
   --wash: var(--bg); --on-bg: var(--ink); --ring: var(--accent);
   --card-edge: var(--accent); --ghost-bg: var(--wash); --ghost-ink: var(--muted); --ghost-line: var(--line); --ghost-chip: var(--line);
   --font: "Source Sans 3", "Source Sans Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-head: Literata, Georgia, "Palatino Linotype", serif;
   --fs: 13px;
 }
 [data-theme="midnight"] {
