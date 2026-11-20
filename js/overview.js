@@ -105,7 +105,7 @@ function mapSectionHTML(course) {
   const missingRoom = Object.values(course.offerings).some((o) => o.lectures.some((m) => !m.room));
 
   return `<h4>Where on campus</h4>
-    ${campusMapHTML(points, { ratio: 1.5, minWidth: 0.22, maxWidth: 340, pinWidth: tagged ? 22 : 16 })}
+    ${campusMapHTML(points, { id: `course:${course.code}`, ratio: 1.5, minWidth: 0.22, maxWidth: 340, pinWidth: tagged ? 22 : 16 })}
     <div class="map-note">${legend}${missingRoom ? ' · some meetings have no room yet' : ''} · ${mapCreditHTML()}</div>`;
 }
 
@@ -217,8 +217,8 @@ function showComparePicker() {
 // One row, one course per side, bars growing out from a centre line.
 // estA / estB: the value is a stand-in (shown as "n/a (≈ x est.)", bar striped).
 // invert: a bigger value gives a SHORTER bar (used for hours: lighter is longer).
-function compareBars(label, a, b, max, format, estA = false, estB = false, invert = false) {
-  const show = (v, est) => (v == null ? 'n/a' : est ? `n/a (≈ ${format(v)} est.)` : format(v));
+function compareBars(label, a, b, max, format, estA = false, estB = false, invert = false, estText = (shown) => `n/a (≈ ${shown} est.)`) {
+  const show = (v, est) => (v == null ? 'n/a' : est ? estText(format(v)) : format(v));
   const width = (v) => {
     if (v == null) return 0;
     const share = Math.min(1, Math.max(0, v / max));
@@ -258,6 +258,11 @@ function compareComments(a, b) {
     comments.push(`${ra >= rb ? a.code : b.code} is rated higher (${Math.max(ra, rb)} vs ${Math.min(ra, rb)}).`);
   }
 
+  const unrated = [a, b].filter(ratingEstimated).map((c) => c.code);
+  if (unrated.length) {
+    comments.push(`No rating yet for ${unrated.join(' and ')}, so the meter counts ${unrated.length > 1 ? 'them' : 'it'} as a neutral ${DEFAULT_RATING} stars.`);
+  }
+
   const shared = QUARTERS.filter((q) => isOffered(a, q.id) && isOffered(b, q.id));
   comments.push(shared.length
     ? `Both run in ${shared.map((q) => q.name).join(', ')}.`
@@ -293,7 +298,7 @@ function showComparison(a, b) {
       </div>
       ${compareBars('Units', a.units, b.units, 5, plain)}
       ${compareBars('Hours per week <span class="cmp-hint">longer bar = lighter</span>', effectiveHours(a), effectiveHours(b), 12, fixed1, hoursEstimated(a), hoursEstimated(b), true)}
-      ${compareBars('Latest rating', latestRating(a), latestRating(b), 5, rated)}
+      ${compareBars('Latest rating', effectiveRating(a), effectiveRating(b), 5, rated, ratingEstimated(a), ratingEstimated(b), false, (shown) => `unrated, counted as ${shown}`)}
       ${compareBars('Quarters offered', quarterCount(a), quarterCount(b), 4, plain)}
       <div class="cmp-row">
         <div class="cmp-label">Rating history <span class="cmp-hint">same 2–5 scale</span></div>
