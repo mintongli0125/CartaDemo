@@ -1,6 +1,6 @@
 # "Why can't Stanford just have ONE planner??"
 
-According to Stanford upperclassmen, Stanford students switch planner apps with every cohort.
+According to Stanford upperclassmen, Stanford students switch planner apps practically every cohort.
 
 OnCourse, PeakUp, GradTree... How can **Carta** stand out?
 
