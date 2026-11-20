@@ -24,7 +24,7 @@ function renderThemeButtons() {
 function loadInitialTheme() {
   const saved = store.get(STORAGE_KEYS.theme, null);
   const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
-  document.documentElement.dataset.theme = saved || (prefersDark ? 'midnight' : 'cardinal');
+  document.documentElement.dataset.theme = saved || 'cardinal';
 }
 
 /* ---------- Clicks and changes ---------- */
