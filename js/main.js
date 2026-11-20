@@ -41,6 +41,7 @@ document.addEventListener('click', (e) => {
     addCourse(ui.openCourse.code, closest('data-add').dataset.add);
     return closeOverview();
   }
+  if (closest('data-compare')) return showComparison(ui.openCourse, findCourse(closest('data-compare').dataset.compare));
   if (target.id === 'compare-btn') return showComparePicker();
   if (target.id === 'close-overlay' || target.id === 'overlay') return closeOverview();
   if (closest('data-theme-choice')) return setTheme(closest('data-theme-choice').dataset.themeChoice);
@@ -52,9 +53,6 @@ document.addEventListener('click', (e) => {
 document.addEventListener('change', (e) => {
   const el = e.target;
 
-  if (el.id === 'compare-select' && el.value) {
-    return showComparison(ui.openCourse, findCourse(el.value));
-  }
   if (el.dataset.color) {
     const [quarterId, index] = parseRef(el.dataset.color);
     updatePlanItem(quarterId, index, { color: el.value });
@@ -67,6 +65,10 @@ document.addEventListener('change', (e) => {
     const [quarterId, index] = parseRef(el.dataset.discussion);
     updatePlanItem(quarterId, index, { discussion: Number(el.value) });
   }
+});
+
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'compare-search') renderCompareResults();
 });
 
 /* ---------- Drag and drop ---------- */
@@ -114,21 +116,5 @@ $('#quarters').addEventListener('drop', (e) => {
 document.documentElement.style.setProperty('--hour', `${HOUR_PX}px`);
 loadInitialTheme();
 renderThemeButtons();
-
-async function boot() {
-  $('#catalog').innerHTML = '<div class="empty">Loading courses…</div>';
-  try {
-    await loadCourses();
-  } catch (err) {
-    $('#catalog').innerHTML = `<div class="empty">Couldn’t load course data (${err.message}). Check your connection and refresh.</div>`;
-    return;
-  }
-
-  // Drop saved entries for courses that no longer exist in the data
-  QUARTERS.forEach((q) => { plan[q.id] = plan[q.id].filter((i) => findCourse(i.code)); });
-
-  renderCatalog();
-  renderPlanner();
-}
-
-boot();
+renderCatalog();
+renderPlanner();
