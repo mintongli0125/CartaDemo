@@ -4,11 +4,17 @@
   --wash: #f7f1ef;        /* quiet inset surface on top of a panel */
   --on-bg: #fff;          /* text that sits directly on the page background */
   --ring: #fff;           /* highlight that has to read against the page background */
+  --star: #d98e04;
+  --card-edge: var(--accent-2);
+  --ghost-bg: rgba(255,255,255,.12);    /* 'not offered' cards: translucent on the red page */
+  --ghost-ink: rgba(255,255,255,.82);
+  --ghost-line: rgba(255,255,255,.4);
+  --ghost-chip: rgba(255,255,255,.16);
   --panel: #fff;
   --ink: #2a2224;
   --muted: #7d6f72;
   --accent: #8c1515;
-  --accent-2: #4d4f53;
+  --accent-2: #00697d;    /* Stanford-ish teal: reads well next to cardinal */
   --line: #e5d9d6;
   --radius: 10px;
   --bad: #d32f2f;
@@ -27,6 +33,7 @@
   --accent: #b5651d; --accent-2: #6f8a4c; --line: #e0cdb2;
   --radius: 18px;
   --wash: var(--bg); --on-bg: var(--ink); --ring: var(--accent);
+  --card-edge: var(--accent); --ghost-bg: var(--wash); --ghost-ink: var(--muted); --ghost-line: var(--line); --ghost-chip: var(--line);
   --font: Literata, Georgia, "Palatino Linotype", serif;
   --font-head: Literata, Georgia, "Palatino Linotype", serif;
   --fs: 13px;
@@ -36,6 +43,7 @@
   --accent: #38e8c6; --accent-2: #8b7bff; --line: #222d52; --bad: #ff5c7a;
   --radius: 6px;
   --wash: var(--bg); --on-bg: var(--ink); --ring: var(--accent);
+  --card-edge: var(--accent); --ghost-bg: var(--wash); --ghost-ink: var(--muted); --ghost-line: var(--line); --ghost-chip: var(--line);
   --font: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --font-head: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --fs: 13px;
@@ -45,6 +53,7 @@
   --accent: #161616; --accent-2: #9a9a9a; --line: #e8e8e8;
   --radius: 0px;
   --wash: var(--bg); --on-bg: var(--ink); --ring: var(--accent);
+  --card-edge: var(--accent); --ghost-bg: var(--wash); --ghost-ink: var(--muted); --ghost-line: var(--line); --ghost-chip: var(--line);
   --font: "Libre Franklin", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-head: "Libre Franklin", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --fs: 13px;
@@ -187,12 +196,18 @@ body.dragging .quarter.rejects::after {
   padding: 9px 11px;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-left: 4px solid var(--accent);
+  border-left: 4px solid var(--card-edge);
   border-radius: var(--radius);
   cursor: grab;
 }
-.card.unavailable { cursor: pointer; background: var(--wash); border-left-color: var(--line); }
-.card.unavailable > * { opacity: .55; }
+.card.unavailable {
+  cursor: pointer;
+  background: var(--ghost-bg); color: var(--ghost-ink);
+  border: 1px dashed var(--ghost-line); border-left: 4px solid var(--ghost-line);
+}
+.card.unavailable .meta { color: var(--ghost-ink); }
+.card.unavailable .qtag { background: var(--ghost-chip); color: var(--ghost-ink); }
+.card.unavailable .stars { opacity: .6; }
 .card h3 { margin: 0; font-size: 13px; }
 .card .meta { margin-top: 2px; font-size: 11px; color: var(--muted); }
 .qtag {
@@ -240,15 +255,16 @@ body.dragging .quarter.rejects::after {
 .compare-picker input[type="search"] { display: block; width: 100%; }
 #compare-results {
   display: grid; gap: 6px; align-content: start;
-  max-height: 220px; margin-top: 6px; padding: 2px; overflow: auto;
+  max-height: 280px; margin-top: 6px; padding: 2px; overflow: auto;
 }
 .pick {
   display: block; width: 100%; min-width: 0;
   padding: 7px 10px; text-align: left;
-  border-left: 4px solid var(--accent);
+  background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent);
   border-radius: var(--radius);
   cursor: pointer;
 }
+.pick:hover { border-color: var(--accent); }
 .pick-title, .pick-meta { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pick-meta { margin-top: 2px; font-size: 11px; color: var(--muted); }
 .pick-q { margin-left: 4px; }
@@ -267,3 +283,19 @@ body.dragging .quarter.rejects::after {
   #catalog-pane { border-left: 0; border-top: 1px solid var(--line); }
   .grid-2 { grid-template-columns: 1fr; }
 }
+
+/* ---------- Stars (fractional) ---------- */
+.stars {
+  display: inline-block; line-height: 1; vertical-align: -1px;
+  background: linear-gradient(90deg, var(--star) var(--fill), var(--line) var(--fill));
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent; -webkit-text-fill-color: transparent;
+}
+
+/* ---------- Similar courses + comparison hints ---------- */
+.similar { display: grid; gap: 6px; }
+.similar .pick { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 10px; }
+.similar .pick > button { grid-column: 2; grid-row: 1 / span 2; }
+.pick-group { margin: 6px 2px 0; font-size: 11px; color: var(--muted); }
+.pick-group:first-child { margin-top: 0; }
+.cmp-hint { margin-left: 4px; font-size: 10px; opacity: .8; }
