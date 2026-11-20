@@ -63,7 +63,7 @@ function courseRowHTML(item, index, quarterId) {
       </select>`
     : '';
 
-  const hoursText = course.hours != null ? `~${course.hours} h/wk` : `no hours data (est. ~${effectiveHours(course)} h/wk)`;
+  const hoursText = course.hours != null ? `~${course.hours} h/wk` : 'no hours data';
 
   return `
     <div class="row">
@@ -82,12 +82,12 @@ function quarterHTML({ id, name }) {
   const conflictingCourses = new Set([...conflicts].map((i) => blocks[i].itemIndex)).size;
 
   const units = items.reduce((sum, i) => sum + findCourse(i.code).units, 0);
-  const courses = items.map((i) => findCourse(i.code));
-  const hours = courses.reduce((sum, c) => sum + effectiveHours(c), 0);
-  const estimatedCount = courses.filter(hoursEstimated).length;
+  const hoursList = items.map((i) => findCourse(i.code).hours);
+  const hours = hoursList.reduce((sum, h) => sum + (h || 0), 0);
+  const missingHours = hoursList.filter((h) => h == null).length;
 
   const unitsText = `${units} / ${UNIT_LIMIT}${units > UNIT_LIMIT ? ` (+${units - UNIT_LIMIT})` : ''}`;
-  const hoursText = `~${hours.toFixed(1)}${estimatedCount ? ` (${estimatedCount} estimated at ${HOURS_PER_UNIT} h/unit)` : ''}`;
+  const hoursText = `~${hours.toFixed(1)}${missingHours ? ` (+${missingHours} no data)` : ''}`;
 
   const status = conflictingCourses
     ? `<span class="conflict-note">⚠ ${conflictingCourses} course${conflictingCourses > 1 ? 's' : ''} in conflict</span>`
