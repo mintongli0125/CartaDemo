@@ -24,7 +24,7 @@ function renderThemeButtons() {
 function loadInitialTheme() {
   const saved = store.get(STORAGE_KEYS.theme, null);
   const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
-  document.documentElement.dataset.theme = saved || 'cardinal';
+  document.documentElement.dataset.theme = saved || (prefersDark ? 'midnight' : 'cardinal');
 }
 
 /* ---------- Clicks and changes ---------- */
@@ -42,6 +42,7 @@ document.addEventListener('click', (e) => {
     return closeOverview();
   }
   if (closest('data-compare')) return showComparison(ui.openCourse, findCourse(closest('data-compare').dataset.compare));
+  if (target.id === 'share-btn') return copyPlanLink();
   if (target.id === 'compare-btn') return showComparePicker();
   if (target.id === 'close-overlay' || target.id === 'overlay') return closeOverview();
   if (closest('data-theme-choice')) return setTheme(closest('data-theme-choice').dataset.themeChoice);
@@ -109,6 +110,20 @@ $('#quarters').addEventListener('drop', (e) => {
   else renderPlanner();
 });
 
+/* ---------- Share button ---------- */
+
+function addShareButton() {
+  const button = document.createElement('button');
+  button.id = 'share-btn';
+  button.type = 'button';
+  button.textContent = 'Copy plan link';
+  button.title = 'Copy a link to this plan so you can open it on another device';
+  $('.topbar').insertBefore(button, $('#themes'));
+}
+
+// Opening or pasting a link that carries a plan loads it into the planner.
+window.addEventListener('hashchange', () => { if (importPlanFromLink()) renderPlanner(); });
+
 /* ---------- Boot ---------- */
 
 ['search', 'filter-quarter', 'sort'].forEach((id) => $('#' + id).addEventListener('input', renderCatalog));
@@ -117,4 +132,6 @@ document.documentElement.style.setProperty('--hour', `${HOUR_PX}px`);
 loadInitialTheme();
 renderThemeButtons();
 renderCatalog();
+addShareButton();
+importPlanFromLink();
 renderPlanner();
