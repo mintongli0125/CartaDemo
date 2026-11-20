@@ -76,7 +76,7 @@ function openOverview(code) {
     <div class="grid-2" style="margin:10px 0">
       <div class="stat"><b>${course.units}</b>units · ${course.grading}</div>
       <div class="stat"><b>${course.hours != null ? `~${course.hours} h/wk` : 'n/a'}</b>average weekly workload</div>
-      <div class="stat"><b>${rating ? '★ ' + rating : 'n/a'}</b>latest rating${course.ratings.length > 1 ? ` (${course.ratings.length} terms)` : ''}</div>
+      <div class="stat"><b>${rating ? starsHTML(rating) + ' ' + rating : 'n/a'}</b>latest rating${course.ratings.length > 1 ? ` (${course.ratings.length} terms)` : ''}</div>
       <div class="stat"><b>${course.ways ? course.ways.map((w) => 'WAY-' + w).join(', ') : 'None'}</b>${course.ger ? 'GER:' + course.ger : 'requirements'}</div>
     </div>
 
@@ -85,14 +85,30 @@ function openOverview(code) {
     ${course.application ? '<div class="detail"><b>Application required</b> for enrollment.</div>' : ''}
     ${sparkline(course.ratings) ? '<h4>Rating history</h4>' + sparkline(course.ratings) : ''}
 
+    ${similarHTML(course)}
+
     <h4>Add to a quarter</h4><div>${addButtons}</div>
     <h4>Sections</h4>${sectionsHTML(course)}
     ${mapHTML(course)}`;
 
   $('#overlay').hidden = false;
+  $('#overlay-card').scrollTop = 0;
 }
 
 const closeOverview = () => ($('#overlay').hidden = true);
+
+function similarHTML(course) {
+  const list = similarCourses(course);
+  if (!list.length) return '';
+  return `<h4>Similar courses</h4>
+    <div class="similar">${list.map(({ course: c, why }) => `
+      <div class="pick" data-open="${c.code}" tabindex="0">
+        <span class="pick-title"><b>${c.code}</b> ${c.title}</span>
+        <span class="pick-meta">${why ? why + ' · ' : ''}${statsText(c)}</span>
+        <button data-compare="${c.code}" title="Compare with ${c.code}">⚖ Compare</button>
+      </div>`).join('')}
+    </div>`;
+}
 
 /* ---------- Compare ---------- */
 
@@ -110,7 +126,17 @@ function renderCompareResults() {
     .filter((c) => c !== ui.openCourse)
     .filter((c) => !query || `${c.code} ${c.title} ${c.description}`.toLowerCase().includes(query))
     .sort(SORTERS.code);
-  $('#compare-results').innerHTML = matches.map(comparePickHTML).join('') || '<div class="empty">No courses match.</div>';
+
+  const similar = similarCourses(ui.openCourse).map((s) => s.course);
+  const top = similar.filter((c) => matches.includes(c)); // keeps best-match-first order
+  const rest = matches.filter((c) => !similar.includes(c));
+
+  const group = (label, list) => `<div class="pick-group">${label}</div>${list.map(comparePickHTML).join('')}`;
+  $('#compare-results').innerHTML = !matches.length
+    ? '<div class="empty">No courses match.</div>'
+    : top.length && rest.length
+      ? group(`Similar to ${ui.openCourse.code}`, top) + group('All other courses', rest)
+      : matches.map(comparePickHTML).join('');
 }
 
 function showComparePicker() {
@@ -124,10 +150,15 @@ function showComparePicker() {
 }
 
 // One row, one course per side, bars growing out from a centre line.
-// estA / estB: the value is a stand-in (shown as "n/a (≈ x est.)", bar striped)
-function compareBars(label, a, b, max, format, estA = false, estB = false) {
+// estA / estB: the value is a stand-in (shown as "n/a (≈ x est.)", bar striped).
+// invert: a bigger value gives a SHORTER bar (used for hours: lighter is longer).
+function compareBars(label, a, b, max, format, estA = false, estB = false, invert = false) {
   const show = (v, est) => (v == null ? 'n/a' : est ? `n/a (≈ ${format(v)} est.)` : format(v));
-  const width = (v) => Math.min(100, ((v || 0) / max) * 100);
+  const width = (v) => {
+    if (v == null) return 0;
+    const share = Math.min(1, Math.max(0, v / max));
+    return (invert ? Math.max(0.03, 1 - share) : share) * 100;
+  };
   return `
     <div class="cmp-row">
       <div class="cmp-label">${label}</div>
@@ -183,6 +214,7 @@ function compareComments(a, b) {
 function showComparison(a, b) {
   const fixed1 = (v) => v.toFixed(1);
   const plain = (v) => v;
+  const rated = (v) => `${starsHTML(v)} ${v.toFixed(1)}`;
   const quarterCount = (c) => Object.keys(c.offerings).length;
   const history = (c) => sparkline(c.ratings) || '<span class="muted">no rating history</span>';
 
@@ -193,8 +225,8 @@ function showComparison(a, b) {
         <div class="cmp-course right"><b>${b.code}</b><span>${b.title}</span></div>
       </div>
       ${compareBars('Units', a.units, b.units, 5, plain)}
-      ${compareBars('Hours per week', effectiveHours(a), effectiveHours(b), 10, fixed1, hoursEstimated(a), hoursEstimated(b))}
-      ${compareBars('Latest rating', latestRating(a), latestRating(b), 5, fixed1)}
+      ${compareBars('Hours per week <span class="cmp-hint">longer bar = lighter</span>', effectiveHours(a), effectiveHours(b), 12, fixed1, hoursEstimated(a), hoursEstimated(b), true)}
+      ${compareBars('Latest rating', latestRating(a), latestRating(b), 5, rated)}
       ${compareBars('Quarters offered', quarterCount(a), quarterCount(b), 4, plain)}
       <div class="cmp-row">
         <div class="cmp-label">Rating history</div>
@@ -205,4 +237,5 @@ function showComparison(a, b) {
         ${compareComments(a, b).map((text) => `<div class="comment">${text}</div>`).join('')}
       </div>
     </div>`;
+  $('#compare-slot').scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
 }
