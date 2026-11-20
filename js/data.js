@@ -10,6 +10,7 @@ const ALL_WAYS = ['A-II', 'AQR', 'CE', 'EDP', 'ER', 'FR', 'SI', 'SMA'];
 const COLORS = ['#8c1515', '#00697d', '#175e54', '#b26f16', '#620059', '#4d4f53', '#c2412d', '#6b7a1f'];
 const UNIT_LIMIT = 20;
 const HOURS_PER_UNIT = 3; // stand-in workload when a course has no hours data
+const DEFAULT_RATING = 2.5; // stand-in rating for unrated courses in the comparison meters only
 
 // The picture behind every map: a crop of Stanford Maps & Records' visitor map (Jan 2022), saved as img/campus-map.webp.
 // Pins are positions on that picture in % of its width and height, so no coordinates are needed anywhere.
