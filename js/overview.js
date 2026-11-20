@@ -36,7 +36,7 @@ function mapHTML(course) {
 
   return `
     <h4>Where on campus <span class="muted">(schematic sketch, not to scale)</span></h4>
-    <svg viewBox="0 0 100 80" width="100%" style="border:1px solid var(--line);border-radius:6px;background:var(--bg)">
+    <svg viewBox="0 0 100 80" width="100%" style="border:1px solid var(--line);border-radius:6px;background:var(--wash)">
       <rect x="16" y="20" width="36" height="34" rx="3" fill="var(--line)"/>
       <text x="34" y="37" font-size="4" fill="var(--muted)" text-anchor="middle">Main Quad</text>
       <ellipse cx="40" cy="72" rx="16" ry="5" fill="var(--line)"/>
@@ -123,15 +123,22 @@ function showComparePicker() {
   $('#compare-search').focus();
 }
 
+// One row, one course per side, bars growing out from a centre line.
 // estA / estB: the value is a stand-in (shown as "n/a (≈ x est.)", bar striped)
-function compareBars(label, a, b, max, format, nameA, nameB, estA = false, estB = false) {
+function compareBars(label, a, b, max, format, estA = false, estB = false) {
   const show = (v, est) => (v == null ? 'n/a' : est ? `n/a (≈ ${format(v)} est.)` : format(v));
   const width = (v) => Math.min(100, ((v || 0) / max) * 100);
   return `
-    <div class="compare-row">
-      <label><span>${label}</span><span>${nameA} ${show(a, estA)} · ${nameB} ${show(b, estB)}</span></label>
-      <div class="bar"><i class="${estA ? 'est' : ''}" style="width:${width(a)}%"></i></div>
-      <div class="bar"><i class="secondary ${estB ? 'est' : ''}" style="width:${width(b)}%"></i></div>
+    <div class="cmp-row">
+      <div class="cmp-label">${label}</div>
+      <div class="cmp-side left">
+        <span class="cmp-val">${show(a, estA)}</span>
+        <div class="bar"><i class="${estA ? 'est' : ''}" style="width:${width(a)}%"></i></div>
+      </div>
+      <div class="cmp-side right">
+        <span class="cmp-val">${show(b, estB)}</span>
+        <div class="bar"><i class="secondary ${estB ? 'est' : ''}" style="width:${width(b)}%"></i></div>
+      </div>
     </div>`;
 }
 
@@ -177,15 +184,25 @@ function showComparison(a, b) {
   const fixed1 = (v) => v.toFixed(1);
   const plain = (v) => v;
   const quarterCount = (c) => Object.keys(c.offerings).length;
+  const history = (c) => sparkline(c.ratings) || '<span class="muted">no rating history</span>';
 
   $('#compare-slot').innerHTML = `
-    <div class="stat" style="margin-top:8px">
-      <b>${a.code} vs ${b.code}</b>
-      ${compareBars('Units', a.units, b.units, 5, plain, a.code, b.code)}
-      ${compareBars('Hours per week', effectiveHours(a), effectiveHours(b), 10, fixed1, a.code, b.code, hoursEstimated(a), hoursEstimated(b))}
-      ${compareBars('Latest rating', latestRating(a), latestRating(b), 5, fixed1, a.code, b.code)}
-      ${compareBars('Quarters offered', quarterCount(a), quarterCount(b), 4, plain, a.code, b.code)}
-      <div class="grid-2"><div>${a.code}${sparkline(a.ratings)}</div><div>${b.code}${sparkline(b.ratings)}</div></div>
-      ${compareComments(a, b).map((text) => `<div class="comment">${text}</div>`).join('')}
+    <div class="stat compare">
+      <div class="cmp-head">
+        <div class="cmp-course left"><b>${a.code}</b><span>${a.title}</span></div>
+        <div class="cmp-course right"><b>${b.code}</b><span>${b.title}</span></div>
+      </div>
+      ${compareBars('Units', a.units, b.units, 5, plain)}
+      ${compareBars('Hours per week', effectiveHours(a), effectiveHours(b), 10, fixed1, hoursEstimated(a), hoursEstimated(b))}
+      ${compareBars('Latest rating', latestRating(a), latestRating(b), 5, fixed1)}
+      ${compareBars('Quarters offered', quarterCount(a), quarterCount(b), 4, plain)}
+      <div class="cmp-row">
+        <div class="cmp-label">Rating history</div>
+        <div class="cmp-side left">${history(a)}</div>
+        <div class="cmp-side right">${history(b)}</div>
+      </div>
+      <div class="cmp-comments">
+        ${compareComments(a, b).map((text) => `<div class="comment">${text}</div>`).join('')}
+      </div>
     </div>`;
 }
