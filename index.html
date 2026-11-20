@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cardinal">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Carta demo</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <h1>Carta <small>2021–22 planner demo</small></h1>
+      <div class="themes" id="themes"></div>
+    </header>
+
+    <main>
+      <section id="planner-pane">
+        <div id="quarters"></div>
+        <div id="ways"></div>
+      </section>
+
+      <section id="catalog-pane">
+        <div class="tools">
+          <input type="search" id="search" placeholder="Search title, code or topic">
+          <select id="filter-quarter">
+            <option value="">Any quarter</option>
+            <option value="A">Autumn</option>
+            <option value="W">Winter</option>
+            <option value="S">Spring</option>
+            <option value="U">Summer</option>
+          </select>
+          <select id="sort">
+            <option value="code">Sort: code</option>
+            <option value="rating">Sort: rating</option>
+            <option value="hours">Sort: lightest</option>
+          </select>
+        </div>
+        <div id="catalog"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="overlay" hidden>
+    <div id="overlay-card">
+      <button class="close" id="close-overlay">Close</button>
+      <div id="overlay-body"></div>
+    </div>
+  </div>
+  <div id="toast" hidden></div>
+
+  <!-- Plain scripts (no modules) so this works when opened straight from disk. Order matters. -->
+  <script src="js/utils.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/planner.js"></script>
+  <script src="js/catalog.js"></script>
+  <script src="js/overview.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
