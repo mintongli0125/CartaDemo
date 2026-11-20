@@ -99,13 +99,13 @@ function mapSectionHTML(course) {
 
   const kinds = new Set(buildings.flatMap((b) => [...b.rooms.values()]));
   const legend = [
-    kinds.has('lecture') && '<span class="pin on"></span>lecture',
-    kinds.has('discussion') && '<span class="pin"></span>discussion sections',
+    kinds.has('lecture') && `${legendPin(false)}lecture`,
+    kinds.has('discussion') && `${legendPin(true)}discussion sections`,
   ].filter(Boolean).join(' ');
   const missingRoom = Object.values(course.offerings).some((o) => o.lectures.some((m) => !m.room));
 
   return `<h4>Where on campus</h4>
-    ${campusMapHTML(points, { ratio: 2.2, minWidth: 0.26, large: true })}
+    ${campusMapHTML(points, { ratio: 1.5, minWidth: 0.22, maxWidth: 340, pinWidth: tagged ? 22 : 16 })}
     <div class="map-note">${legend}${missingRoom ? ' · some meetings have no room yet' : ''} · ${mapCreditHTML()}</div>`;
 }
 
