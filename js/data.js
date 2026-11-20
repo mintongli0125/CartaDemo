@@ -9,7 +9,6 @@ const DAY_NAMES = { M: 'Mon', T: 'Tue', W: 'Wed', R: 'Thu', F: 'Fri' };
 const ALL_WAYS = ['A-II', 'AQR', 'CE', 'EDP', 'ER', 'FR', 'SI', 'SMA'];
 const COLORS = ['#8c1515', '#2a6f97', '#2e7d32', '#b8860b', '#6a4c93', '#c2185b', '#00838f', '#e65100'];
 const UNIT_LIMIT = 20;
-const HOURS_PER_UNIT = 3; // stand-in workload when a course has no hours data
 
 // Schematic campus positions (x, y on a 100x80 grid). Not real coordinates.
 const BUILDING_PINS = {
