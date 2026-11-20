@@ -207,7 +207,7 @@ body.dragging .quarter.rejects::after {
 }
 .card.unavailable .meta { color: var(--ghost-ink); }
 .card.unavailable .qtag { background: var(--ghost-chip); color: var(--ghost-ink); }
-.card.unavailable .stars { opacity: .6; }
+.card.unavailable .rating-stars { opacity: .6; }
 .card h3 { margin: 0; font-size: 13px; }
 .card .meta { margin-top: 2px; font-size: 11px; color: var(--muted); }
 .qtag {
@@ -284,14 +284,6 @@ body.dragging .quarter.rejects::after {
   .grid-2 { grid-template-columns: 1fr; }
 }
 
-/* ---------- Stars (fractional) ---------- */
-.stars {
-  display: inline-block; line-height: 1; vertical-align: -1px;
-  background: linear-gradient(90deg, var(--star) var(--fill), var(--line) var(--fill));
-  -webkit-background-clip: text; background-clip: text;
-  color: transparent; -webkit-text-fill-color: transparent;
-}
-
 /* ---------- Similar courses + comparison hints ---------- */
 .similar { display: grid; gap: 6px; }
 .similar .pick { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 10px; }
@@ -299,3 +291,32 @@ body.dragging .quarter.rejects::after {
 .pick-group { margin: 6px 2px 0; font-size: 11px; color: var(--muted); }
 .pick-group:first-child { margin-top: 0; }
 .cmp-hint { margin-left: 4px; font-size: 10px; opacity: .8; }
+
+/* ---------- Rating history chart ---------- */
+.rating-chart { display: block; width: 100%; height: auto; }
+.rating-chart text { font-family: var(--font); }
+
+/* ---------- Course map (Leaflet injects its own stylesheet later, so the #overlay rules out-rank it) ---------- */
+.course-map {
+  height: 300px; overflow: hidden; isolation: isolate;
+  background: var(--wash);
+  border: 1px solid var(--line); border-radius: calc(var(--radius) / 1.5);
+}
+.course-map.offline { height: auto; padding: 8px; }
+.map-note { margin-top: 6px; font-size: 11px; color: var(--muted); }
+.pin {
+  display: inline-block; width: 9px; height: 9px; margin: 0 4px 0 8px;
+  border: 2px solid var(--accent); border-radius: 50%; background: var(--panel); vertical-align: -1px;
+}
+.pin.on { background: var(--accent); }
+.map-note .pin:first-child { margin-left: 0; }
+#overlay .leaflet-container { font: inherit; background: var(--wash); }
+#overlay .leaflet-tooltip.map-label {
+  padding: 1px 6px; font-size: 11px; font-weight: 600;
+  color: var(--ink); background: var(--panel); border: 1px solid var(--line); box-shadow: none;
+}
+#overlay .leaflet-tooltip.map-label::before { display: none; }
+#overlay .leaflet-popup-content-wrapper, #overlay .leaflet-popup-tip { background: var(--panel); color: var(--ink); }
+#overlay .leaflet-popup-content { margin: 10px 12px; font: var(--fs)/1.5 var(--font); }
+#overlay .leaflet-popup-content a { color: var(--accent); }
+#overlay .leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
