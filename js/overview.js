@@ -297,7 +297,7 @@ function showComparison(a, b) {
         <div class="cmp-course right"><b>${b.code}</b><span>${b.title}</span></div>
       </div>
       ${compareBars('Units', a.units, b.units, 5, plain)}
-      ${compareBars('Hours per week <span class="cmp-hint">longer bar = lighter</span>', effectiveHours(a), effectiveHours(b), 12, fixed1, hoursEstimated(a), hoursEstimated(b), true)}
+      ${compareBars('Hours per week <span class="cmp-hint">longer bar = lighter workload</span>', effectiveHours(a), effectiveHours(b), 12, fixed1, hoursEstimated(a), hoursEstimated(b), true)}
       ${compareBars('Latest rating', effectiveRating(a), effectiveRating(b), 5, rated, ratingEstimated(a), ratingEstimated(b), false, (shown) => `unrated, counted as ${shown}`)}
       ${compareBars('Quarters offered', quarterCount(a), quarterCount(b), 4, plain)}
       <div class="cmp-row">
