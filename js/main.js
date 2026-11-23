@@ -43,6 +43,7 @@ document.addEventListener('click', (e) => {
   }
   if (closest('data-compare')) return showComparison(ui.openCourse, findCourse(closest('data-compare').dataset.compare));
   if (target.id === 'share-btn') return copyPlanLink();
+  if (target.id === 'retry-load') return boot();
   if (target.id === 'compare-btn') return showComparePicker();
   if (target.id === 'close-overlay' || target.id === 'overlay') return closeOverview();
   if (closest('data-theme-choice')) return setTheme(closest('data-theme-choice').dataset.themeChoice);
@@ -122,7 +123,7 @@ function addShareButton() {
 }
 
 // Opening or pasting a link that carries a plan loads it into the planner.
-window.addEventListener('hashchange', () => { if (importPlanFromLink()) renderPlanner(); });
+window.addEventListener('hashchange', () => { if (COURSES.length && importPlanFromLink()) renderPlanner(); });
 
 /* ---------- Boot ---------- */
 
@@ -131,7 +132,29 @@ window.addEventListener('hashchange', () => { if (importPlanFromLink()) renderPl
 document.documentElement.style.setProperty('--hour', `${HOUR_PX}px`);
 loadInitialTheme();
 renderThemeButtons();
-renderCatalog();
 addShareButton();
-importPlanFromLink();
-renderPlanner();
+
+// Nothing is drawn until the course data is in. If GitHub can't be reached and there's no saved copy, say so and offer a retry.
+async function boot() {
+  const message = '<div class="empty">Loading courses…</div>';
+  $('#catalog').innerHTML = message;
+  $('#quarters').innerHTML = message;
+
+  try {
+    const { fromCache } = await loadCourses();
+    afterCoursesLoaded();
+    if (fromCache) toast('Couldn’t reach GitHub, so these are the courses last saved on this device.');
+  } catch (error) {
+    const failure = `<div class="empty">Couldn’t load the course data (${error.message}).<br>
+      <button id="retry-load" type="button">Try again</button></div>`;
+    $('#catalog').innerHTML = failure;
+    $('#quarters').innerHTML = failure;
+    return;
+  }
+
+  renderCatalog();
+  importPlanFromLink();
+  renderPlanner();
+}
+
+boot();
