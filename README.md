@@ -24,7 +24,7 @@ But it does SO much more...
 Carta Demo has some unique features, which you'll rarely find in other planners:
 
 - Zoom-in class location map;
-- Plan sharing with one simple link;
+- Plan sharing with 1 simple link;
 - Visual course comparison + recommendations;
 - Custom themes!
 
