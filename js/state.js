@@ -537,3 +537,25 @@ async function copyPlanLink() {
   }
   toast(`Link copied (${count} course${count > 1 ? 's' : ''}). Paste it on your other device.`);
 }
+
+/* ---------- After the course data has loaded ---------- */
+
+// A saved plan can mention courses or sections that are no longer in the data (the file changed). Drop or repair those.
+function prunePlan() {
+  QUARTERS.forEach((q) => {
+    plan[q.id] = (Array.isArray(plan[q.id]) ? plan[q.id] : []).filter((item) => {
+      const course = findCourse(item.code);
+      return course && isOffered(course, q.id);
+    }).map((item) => {
+      const offering = findCourse(item.code).offerings[q.id];
+      const inRange = (n, list) => (Number.isInteger(n) && n >= 0 && n < (list?.length || 0) ? n : 0);
+      return { ...item, lecture: inRange(item.lecture, offering.lectures), discussion: inRange(item.discussion, offering.discussions) };
+    });
+  });
+}
+
+// Anything computed from the course list has to be redone when the list changes.
+function afterCoursesLoaded() {
+  similarityVectors = null;
+  prunePlan();
+}
