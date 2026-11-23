@@ -50,6 +50,7 @@ I implemented an intuitive, informative course selection and comparison system, 
 - Visualization for easy course comparison & rating history;
 - Filter and sort;
 - ...and more!
+
 I wanted to showcase the full Carta experience I envisioned alongside the feature, so I've prototyped fully functional drag-and-drop quarterly / weekly timetables (for 2021-22, since the data is from that year).
 
 ### Frontend vs Backend?
@@ -58,6 +59,7 @@ As a full-stack developer, I chose to design a frontend demo. An intuitive, acce
 - Course details,
 - Schedule conflicts,
 - Alternative options...
+
 My demo uses a single json file for source data, and localstorage in place of cloud storage, portable across devices via the "copy link" feature. This speeds up demo creation, and also allows users more privacy.
 
 ### Design decisions
