@@ -63,7 +63,7 @@ As a full-stack developer, I chose to design a frontend demo. An intuitive, acce
 My demo uses a single json file for source data, and localstorage in place of cloud storage, portable across devices via the "copy link" feature. This speeds up demo creation, and also allows users more privacy.
 
 ### Design decisions
-Video WIP
+[See video!](https://www.youtube.com/watch?v=s7G8Q6tbn78)
 
 ### AI use
 
